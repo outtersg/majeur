@@ -35,7 +35,18 @@ class Majeur
 	{
 		$this->diag = new MajeurDiag;
 		$this->silo = $silo;
-		$this->listeurs = is_array($listeurs) ? $listeurs : array($listeurs);
+		$this->silo->majeur = $this;
+		
+		// Les listeurs.
+		
+		$this->listeurs = array();
+		// Si le silo a besoin de s'initialiser, on le glisse en premier: ainsi ses MàJ seront-elles premières en lice pour exécution.
+		if($this->silo instanceof MajeurListeur)
+			$this->listeurs[] = $this->silo;
+		$this->listeurs = array_merge($this->listeurs, is_array($listeurs) ? $listeurs : array($listeurs));
+		
+		// Les exécutants.
+		
 		$this->joueurs = is_array($joueurs) ? $joueurs : array($joueurs);
 		foreach($this->joueurs as $joueur)
 			$joueur->majeur = $this;
