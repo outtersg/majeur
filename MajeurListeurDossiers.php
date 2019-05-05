@@ -82,7 +82,7 @@ class MajeurListeurDossiers implements MajeurListeur
 	/**
 	 * Renvoie la liste des mises-à-jour potentielles du système.
 	 *
-	 * @return array [ <app>: [ <version>: <uri>, <version>: <uri> ] ]
+	 * @return array [ [ <module>, <version>, <info> ], [ etc. ] ]; <info> est par exemple l'URL de la chose à jouer.
 	 */
 	public function lister()
 	{
@@ -101,7 +101,7 @@ class MajeurListeurDossiers implements MajeurListeur
 						$élémentsApp[0 + substr($clé, 3)] = $val;
 				ksort($élémentsApp, SORT_NUMERIC);
 				$app = implode($this->sépÉlémentsModule, $élémentsApp);
-				$majs[$app][$r['version']] = $chemin;
+				$majs[] = array($app, $r['version'], $chemin);
 			}
 			// À FAIRE: else notifier qu'un fichier correspondait au glob() mais que le crible (plus sévère) de l'expr l'a éliminé: erreur de nommage?
 		
