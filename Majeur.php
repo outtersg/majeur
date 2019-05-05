@@ -31,13 +31,14 @@ require_once dirname(__FILE__).'/MajeurJoueur.php';
  */
 class Majeur
 {
-	public function __construct(MajeurSilo $silo, MajeurListeur $listeur, MajeurJoueur $joueur)
+	public function __construct(MajeurSilo $silo, MajeurListeur $listeur, $joueurs)
 	{
 		$this->diag = new MajeurDiag;
 		$this->silo = $silo;
 		$this->listeur = $listeur;
-		$this->joueur = $joueur;
-		$this->joueur->majeur = $this;
+		$this->joueurs = is_array($joueurs) ? $joueurs : array($joueurs);
+		foreach($this->joueurs as $joueur)
+			$joueur->majeur = $this;
 	}
 	
 	protected function _calculerResteÀJouer()
@@ -117,7 +118,16 @@ class Majeur
 		$this->_bloquées[$module][$version] = true; // Histoire qu'on se sache en cours.
 		try
 		{
-			$this->joueur->jouer($module, $version, $info);
+			$joué = false;
+			foreach($this->joueurs as $joueur)
+				if($joueur->saitJouer($module, $version, $info))
+				{
+					$joueur->jouer($module, $version, $info);
+					$joué = true;
+					break;
+				}
+			if(!$joué)
+				throw Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
 			$this->silo->valider($module, $version);
 			unset($this->_bloquées[$module][$version]);
 			$this->_faites[$module][$version] = $info;

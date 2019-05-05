@@ -27,6 +27,11 @@
 interface MajeurJoueur
 {
 	/**
+	 * Indique si l'on prend en charge une mise-à-jour.
+	 */
+	public function saitJouer($module, $version, $info);
+	
+	/**
 	 * Exécute une mise-à-jour.
 	 *
 	 * @param string $module Module de la MàJ.
