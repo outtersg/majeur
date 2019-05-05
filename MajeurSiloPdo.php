@@ -24,9 +24,13 @@
 /**
  * Enregistre les mises-à-jour effectuées.
  */
-class MajeurSiloPdo implements MajeurSilo
+class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 {
 	public $moi = '.';
+	
+	// Par convention, la 1 est la version à partir de laquelle notre table existe (les 0.x serviront à préparer les extensions etc.).
+	const V_VERROU = '1';
+	const V_COMM = '1.1';
 	
 	public function __construct(PDO $bdd, $table)
 	{
@@ -37,17 +41,43 @@ class MajeurSiloPdo implements MajeurSilo
 	public function déjàJouées()
 	{
 		$r = array();
+		try
+		{
 		foreach ($this->bdd->query('select module, version from '.$this->table)->fetchAll() as $l)
 			$r[$l['module']][$l['version']] = true;
+		}
+		catch(PDOException $ex)
+		{
+			if(!isset($this->_exceptionTolérée))
+				throw $ex;
+			$this->bdd->rollback();
+			$this->bdd->beginTransaction();
+		}
 		
 		return $r;
 	}
 	
-	public function verrouiller($avecVraiVerrouillage = true)
+	public function verrouiller()
 	{
 		$this->bdd->beginTransaction();
-		if($avecVraiVerrouillage)
+		
+		try
+		{
 			$this->bdd->query('lock table '.$this->table);
+		}
+		catch(PDOException $ex)
+		{
+			// Le seul cas de pétage possible est si nous-mêmes ne nous sommes pas initialisés.
+			if(isset($this->majeur->_àFaire[$this->moi][MajeurSiloPdo::V_VERROU]))
+			{
+				$this->bdd->rollback();
+				$this->bdd->beginTransaction();
+				// Et encore, on ne sait pas pour quelle version on nous demande de verrouiller: on vous a à l'œil, on vérifiera tout ça à la sortie.
+				$this->_exceptionTolérée = $ex;
+			}
+			else
+				throw $ex;
+		}
 	}
 	
 	public function annuler()
@@ -57,7 +87,14 @@ class MajeurSiloPdo implements MajeurSilo
 	
 	public function valider($module, $version, $comm = null)
 	{
-		if($module != $this->moi || $version >= 1)
+		if(isset($this->_exceptionTolérée))
+		{
+			// Si on a laissé passer une exception sur le verrouillage, croyant que nous n'avions pas encore de quoi poser le verrou et qu'il nous fallait donc être tolérants jusque-là; mais que finalement on se rend compte qu'on essaie de nous emberlificoter (de passer une MàJ hors-sujet par rapport à notre volonté de converger au plus vite vers une base verrouillable), mieux vaut péter tard que jamais.
+			if($module != $this->moi || version_compare($version, MajeurSiloPdo::V_VERROU) > 0)
+				throw $ex;
+			unset($this->_exceptionTolérée);
+		}
+		if($module != $this->moi || version_compare($version, MajeurSiloPdo::V_COMM) >= 0)
 		{
 			$req = $this->bdd->prepare('insert into '.$this->table.' (module, version, comm) values (:module, :version, :comm)');
 			$req->execute(array('module' => $module, 'version' => $version, 'comm' => $comm));
@@ -71,58 +108,29 @@ class MajeurSiloPdo implements MajeurSilo
 	}
 	
 	/*- Initialisation -------------------------------------------------------*/
-	/* Où l'on parle d'œuf et de poule */
+	/* Où l'on parle d'œuf et de poule, et où nous sommes aussi considérés comme un Listeur de ce dont nous-mêmes avons besoin. */
 	
 	public function initialiser()
 	{
-		// Première tentative, optimiste.
-		
-		try
-		{
-			$r = $this->déjàJouées();
-		}
-		catch(PDOException $ex)
-		{
-			// Si l'on atterit sur une base vierge, peut-être notre table n'existe-t-elle même pas, d'où l'exception. Considérons que nous n'avons même pas joué notre propre initialisation, avant de retenter.
-			$r = array();
-		}
-		
-		// Seconde tentative
-		
-		if($this->_installer($r))
-			$this->déjàJouées(); // Par acquis de conscience.
+		if(!isset($this->installs))
+			$this->installs = array
+			(
+				MajeurSiloPdo::V_VERROU => 'create table '.$this->table.' (quand timestamp default now(), module varchar(255), version varchar(31))',
+				MajeurSiloPdo::V_COMM => 'alter table '.$this->table.' add column comm text',
+			);
 	}
 	
-	/**
-	 * Installe notre propre schéma.
-	 *
-	 * @return boolean true si des mises-à-jour ont dû être jouées.
-	 */
-	protected function _installer($déjàJouées)
+	public function lister()
 	{
-		$installs = array
-		(
-			0 => 'create table '.$this->table.' (quand timestamp default now(), module varchar(255), version varchar(31))',
-			1 => 'alter table '.$this->table.' add column comm text',
-		);
-		
-		if(isset($déjàJouées[$this->moi]))
-			$installs = array_diff_key($installs, $déjàJouées[$this->moi]);
-		if(!count($installs))
-			return false;
-		
-		foreach($installs as $version => $install)
-			$this->_jouer($this->moi, $version, $install);
-		
-		return true;
+		$r = array();
+		foreach($this->installs as $version => $sql)
+			$r[] = array($this->moi, $version, $sql, $this);
+		return $r;
 	}
 	
-	protected function _jouer($module, $version, $sql)
+	public function jouer($module, $version, $sql)
 	{
-		// On ne peut verrouiller la table que si elle existe, donc en version 1 ou supérieure.
-		$this->verrouiller($module != $this->moi || $version > 0);
 		$this->bdd->query($sql);
-		$this->valider($module, $version, $sql);
 	}
 }
 
