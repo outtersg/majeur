@@ -35,6 +35,11 @@ class MajeurJoueurPdo implements MajeurJoueur
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'));
 	}
 	
+	public function saitJouer($module, $version, $info)
+	{
+		return is_string($info) && file_exists($info) && substr($info, -4) == '.sql';
+	}
+	
 	/**
 	 * Exécute une mise-à-jour.
 	 *
