@@ -131,6 +131,7 @@ class Majeur
 		$this->_bloquées[$module][$version] = true; // Histoire qu'on se sache en cours.
 		try
 		{
+			$this->diag->normal("=== $module $version ===\n(".$this->_libelléMàj($info).")\n");
 			$joué = false;
 			foreach($this->joueurs as $joueur)
 				if($joueur->saitJouer($module, $version, $info))
