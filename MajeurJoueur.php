@@ -29,12 +29,11 @@ interface MajeurJoueur
 	/**
 	 * Exécute une mise-à-jour.
 	 *
-	 * @param Majeur $majeur Celui qui nous fait tourner, si on a besoin de l'interroger.
 	 * @param string $module Module de la MàJ.
 	 * @param string $version Version en semver.
 	 * @param mixed $info Truc à jouer (retour du listeur; par exemple une URI).
 	 */
-	public function jouer(Majeur $majeur, $module, $version, $info);
+	public function jouer($module, $version, $info);
 }
 
 ?>

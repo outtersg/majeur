@@ -117,7 +117,7 @@ class Majeur
 		$this->_bloquées[$module][$version] = true; // Histoire qu'on se sache en cours.
 		try
 		{
-			$this->joueur->jouer($this, $module, $version, $info);
+			$this->joueur->jouer($module, $version, $info);
 			$this->silo->valider($module, $version);
 			unset($this->_bloquées[$module][$version]);
 			$this->_faites[$module][$version] = $info;
