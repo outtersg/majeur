@@ -26,6 +26,12 @@
  */
 class MajeurDiag
 {
+	public function normal($texte)
+	{
+		echo $texte;
+		return $this;
+	}
+	
 	public function info($texte)
 	{
 		return $this->_sortir('90', $texte);
