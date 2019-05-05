@@ -57,7 +57,7 @@ class Majeur
 	public function tourner()
 	{
 		$this->silo->initialiser();
-		$this->_àFaire = $this->listeur->lister();
+		$this->_àFaire = $this->_listerParModule();
 		$this->_bloquées = array();
 		while(true)
 		{
@@ -76,6 +76,19 @@ class Majeur
 					
 			$this->jouerEtDéverrouiller($module, $version); // À FAIRE: si true, faire les trucs. Mais attention, un #skip peut avoir aussi retirés->_àFaire.
 		}
+	}
+	
+	protected function _listerParModule()
+	{
+		$r = array();
+		$màjs = $this->listeur->lister();
+		foreach($màjs as $màj)
+		{
+			if(isset($r[$màj[0]][$màj[1]]))
+				throw new Exception('Deux mises-à-jour '.$màj[0].' '.$màj[1].': '.$this->_libelléMàj($r[$màj[0]][$màj[1]]).', '.$this->_libelléMàj($màj[2]));
+			$r[$màj[0]][$màj[1]] = $màj[2];
+		}
+		return $r;
 	}
 	
 	protected function _prochaine()

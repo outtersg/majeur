@@ -29,7 +29,7 @@ interface MajeurListeur
 	/**
 	 * Renvoie la liste des mises-à-jour potentielles du système.
 	 *
-	 * @return array [ <app>: [ <version>: <uri>, <version>: <uri> ] ]
+	 * @return array [ [ <module>, <version>, <info> ], [ etc. ] ]; <info> est par exemple l'URL de la chose à jouer.
 	 */
 	public function lister();
 }
