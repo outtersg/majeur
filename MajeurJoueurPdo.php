@@ -73,6 +73,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 	public function _jouerRequête($sql)
 	{
 		$t0 = microtime(true);
+		$this->majeur->diag->info($sql.' ');
 		try
 		{
 			$ex = null;
@@ -84,6 +85,15 @@ class MajeurJoueurPdo implements MajeurJoueur
 		}
 		
 		$durée = microtime(true) - $t0;
+		if($ex || $durée >= 10)
+			$sortie = 'erreur';
+		else if($durée >= 1)
+			$sortie = 'alerte';
+		else
+			$sortie = 'bon';
+		
+		$durée = $durée >= 1 ? sprintf('%.3f s', $durée) : sprintf('%d ms', ceil($durée * 1000));
+		$this->majeur->diag->$sortie($ex ? "\n".'^[[4m/!\\^[[24m '.$ex->getMessage()."\n" : '[ '.$durée.' ]'."\n");
 		
 		if($ex)
 			throw $ex;
