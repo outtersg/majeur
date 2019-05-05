@@ -31,11 +31,11 @@ require_once dirname(__FILE__).'/MajeurJoueur.php';
  */
 class Majeur
 {
-	public function __construct(MajeurSilo $silo, MajeurListeur $listeur, $joueurs)
+	public function __construct(MajeurSilo $silo, $listeurs, $joueurs)
 	{
 		$this->diag = new MajeurDiag;
 		$this->silo = $silo;
-		$this->listeur = $listeur;
+		$this->listeurs = is_array($listeurs) ? $listeurs : array($listeurs);
 		$this->joueurs = is_array($joueurs) ? $joueurs : array($joueurs);
 		foreach($this->joueurs as $joueur)
 			$joueur->majeur = $this;
@@ -81,8 +81,8 @@ class Majeur
 	protected function _listerParModule()
 	{
 		$r = array();
-		$màjs = $this->listeur->lister();
-		foreach($màjs as $màj)
+		foreach($this->listeurs as $listeur)
+			foreach($listeur->lister() as $màj)
 		{
 			if(isset($r[$màj[0]][$màj[1]]))
 				throw new Exception('Deux mises-à-jour '.$màj[0].' '.$màj[1].': '.$this->_libelléMàj($r[$màj[0]][$màj[1]]).', '.$this->_libelléMàj($màj[2]));
