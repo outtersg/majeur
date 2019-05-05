@@ -22,7 +22,7 @@
  */
 
 require_once dirname(__FILE__).'/MajeurSilo.php';
-require_once dirname(__FILE__).'/MajeurFournisseur.php';
+require_once dirname(__FILE__).'/MajeurListeur.php';
 require_once dirname(__FILE__).'/MajeurJoueur.php';
 
 /**
@@ -30,10 +30,10 @@ require_once dirname(__FILE__).'/MajeurJoueur.php';
  */
 class Majeur
 {
-	public function __construct(MajeurSilo $silo, MajeurFournisseur $fournisseur, MajeurJoueur $joueur)
+	public function __construct(MajeurSilo $silo, MajeurListeur $listeur, MajeurJoueur $joueur)
 	{
 		$this->silo = $silo;
-		$this->fournisseur = $fournisseur;
+		$this->listeur = $listeur;
 		$this->joueur = $joueur;
 	}
 	
@@ -53,7 +53,7 @@ class Majeur
 	public function tourner()
 	{
 		$this->silo->initialiser();
-		$this->_àFaire = $this->fournisseur->lister();
+		$this->_àFaire = $this->listeur->lister();
 		$this->_bloquées = array();
 		while(true)
 		{

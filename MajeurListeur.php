@@ -24,7 +24,7 @@
 /**
  * Fournit au Majeur une liste de mises-à-jour disponibles.
  */
-interface MajeurFournisseur
+interface MajeurListeur
 {
 	/**
 	 * Renvoie la liste des mises-à-jour potentielles du système.
