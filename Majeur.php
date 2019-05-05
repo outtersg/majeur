@@ -87,6 +87,8 @@ class Majeur
 			if(isset($r[$màj[0]][$màj[1]]))
 				throw new Exception('Deux mises-à-jour '.$màj[0].' '.$màj[1].': '.$this->_libelléMàj($r[$màj[0]][$màj[1]]).', '.$this->_libelléMàj($màj[2]));
 			$r[$màj[0]][$màj[1]] = $màj[2];
+			if(isset($màj[3]))
+				$this->méta[$màj[0]][$màj[1]] = array($màj[3]);
 		}
 		return $r;
 	}
@@ -132,16 +134,19 @@ class Majeur
 		try
 		{
 			$this->diag->normal("=== $module $version ===\n(".$this->_libelléMàj($info).")\n");
-			$joué = false;
-			foreach($this->joueurs as $joueur)
-				if($joueur->saitJouer($module, $version, $info))
+			$joueur = null;
+			if(isset($this->méta[$module][$version][0]))
+				$joueur = $this->méta[$module][$version][0];
+			else
+				foreach($this->joueurs as $candidat)
+					if($candidat->saitJouer($module, $version, $info))
 				{
-					$joueur->jouer($module, $version, $info);
-					$joué = true;
+						$joueur = $candidat;
 					break;
 				}
-			if(!$joué)
-				throw Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
+			if(!$joueur)
+				throw new Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
+			$joueur->jouer($module, $version, $info);
 			$this->silo->valider($module, $version);
 			unset($this->_bloquées[$module][$version]);
 			$this->_faites[$module][$version] = $info;
