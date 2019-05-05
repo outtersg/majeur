@@ -155,6 +155,23 @@ class Majeur
 		else
 			throw new MajeurEnAttente('En attente de '.$module.' '.$version, array($module, $version));
 	}
+	
+	protected function _descrMàj($module, $version, $info)
+	{
+		return "$module $version (".$this->_libelléMàj($info).")";
+	}
+	
+	protected function _libelléMàj($info)
+	{
+		if(is_string($info))
+			return $info;
+		if(is_object($info))
+			if(method_exists($info, '__toString'))
+				return $info->__toString();
+			else
+				return get_class($info).' '.spl_object_hash($info);
+		return serialize($info);
+	}
 }
 
 ?>
