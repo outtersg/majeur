@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+require_once dirname(__FILE__).'/MajeurDiag.php';
 require_once dirname(__FILE__).'/MajeurSilo.php';
 require_once dirname(__FILE__).'/MajeurListeur.php';
 require_once dirname(__FILE__).'/MajeurJoueur.php';
@@ -32,6 +33,7 @@ class Majeur
 {
 	public function __construct(MajeurSilo $silo, MajeurListeur $listeur, MajeurJoueur $joueur)
 	{
+		$this->diag = new MajeurDiag;
 		$this->silo = $silo;
 		$this->listeur = $listeur;
 		$this->joueur = $joueur;
