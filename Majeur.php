@@ -37,6 +37,7 @@ class Majeur
 		$this->silo = $silo;
 		$this->listeur = $listeur;
 		$this->joueur = $joueur;
+		$this->joueur->majeur = $this;
 	}
 	
 	protected function _calculerResteÀJouer()
