@@ -1,0 +1,8 @@
+{
+	"name": "gui/majeur",
+	"description": "Listeur et joueur de mises-à-jour",
+	"require":
+	{
+		"php": ">= 5.2.0"
+	}
+}
