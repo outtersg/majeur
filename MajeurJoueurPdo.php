@@ -98,7 +98,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 			$sortie = 'bon';
 		
 		$durée = $durée >= 1 ? sprintf('%.3f s', $durée) : sprintf('%d ms', ceil($durée * 1000));
-		$this->majeur->diag->$sortie($ex ? "\n".'^[[4m/!\\^[[24m '.$ex->getMessage()."\n" : '[ '.$durée.' ]'."\n");
+		$this->majeur->diag->$sortie($ex ? "\n".'[4m/!\\[24m '.$ex->getMessage()."\n" : '[ '.$durée.' ]'."\n");
 		
 		if($ex)
 			throw $ex;
