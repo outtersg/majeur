@@ -9,5 +9,12 @@
 	"suggest":
 	{
 		"gui/sqleur": "nécessaire pour le MajeurJoueurPdo"
-	}
+	},
+	"repositories":
+	[
+		{
+			"type": "path",
+			"url": "../sqleur"
+		}
+	]
 }
