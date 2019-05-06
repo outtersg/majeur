@@ -29,10 +29,11 @@ require_once dirname(__FILE__).'/../sqleur/Sqleur.php';
  */
 class MajeurJoueurPdo implements MajeurJoueur
 {
-	public function __construct($bdd)
+	public function __construct($bdd, $défs = array())
 	{
 		$this->bdd = $bdd;
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'));
+		$this->défs = $défs;
 	}
 	
 	public function saitJouer($module, $version, $info)
@@ -71,7 +72,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 		(
 			':pilote' => $pilote,
 			':driver' => $pilote,
-		));
+		) + $this->défs);
 	}
 	
 	public function _jouerRequête($sql)
