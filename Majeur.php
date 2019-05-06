@@ -98,11 +98,13 @@ class Majeur
 			if(!count($màjsListeur))
 				throw new Exception('Aucune mise-à-jour remontée par '.get_class($listeur));
 			foreach($màjsListeur as $màj)
+			{
 			if(isset($r[$màj[0]][$màj[1]]))
 				throw new Exception('Deux mises-à-jour '.$màj[0].' '.$màj[1].': '.$this->_libelléMàj($r[$màj[0]][$màj[1]]).', '.$this->_libelléMàj($màj[2]));
 			$r[$màj[0]][$màj[1]] = $màj[2];
 			if(isset($màj[3]))
 				$this->méta[$màj[0]][$màj[1]] = array($màj[3]);
+			}
 		}
 		return $r;
 	}
