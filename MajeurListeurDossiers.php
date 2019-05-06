@@ -65,6 +65,9 @@ class MajeurListeurDossiers implements MajeurListeur
 			// Conversion du glob en expr.
 			$exprChemins = GlobExpr::globEnExpr($globDossiers).'/'.$exprChemins;
 		
+		$this->_numProchaineCapture = 0;
+		$exprChemins = preg_replace_callback('#{[^}]*}#', array($this, '_accoladeEnCapture'), $exprChemins);
+		
 		// Création de la regex finale.
 		
 		foreach(array('#', '@', '%', '&', null) as $borne)
@@ -77,6 +80,11 @@ class MajeurListeurDossiers implements MajeurListeur
 		// Et on recalcule le ou les glob résultants.
 		
 		$this->_globs = GlobExpr::exprEnGlobs($exprChemins);
+	}
+	
+	public function _accoladeEnCapture($attrapage)
+	{
+		return '(?P<app'.(++$this->_numProchaineCapture).'>'.substr($attrapage[0], 1, -1).')';
 	}
 	
 	/**
