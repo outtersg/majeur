@@ -8,7 +8,8 @@
 	},
 	"suggest":
 	{
-		"gui/sqleur": "nécessaire pour le MajeurJoueurPdo"
+		"gui/sqleur": "nécessaire pour le MajeurJoueurPdo",
+		"gui/util": "nécessaire pour le MajeurListeurDossiers"
 	},
 	"repositories":
 	[
