@@ -28,9 +28,13 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 {
 	public $moi = '.';
 	
+	public $colModule = 'module';
+	public $colVersion = 'version';
+	public $colComm = 'comm';
+	
 	// Par convention, la 1 est la version à partir de laquelle notre table existe (les 0.x serviront à préparer les extensions etc.).
-	const V_VERROU = '1';
-	const V_COMM = '1.1';
+	public $vVerrou = '1';
+	public $vComm = '1.1';
 	
 	public function __construct(PDO $bdd, $table)
 	{
@@ -43,8 +47,8 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		$r = array();
 		try
 		{
-		foreach ($this->bdd->query('select module, version from '.$this->table)->fetchAll() as $l)
-			$r[$l['module']][$l['version']] = true;
+		foreach ($this->bdd->query('select '.$this->colModule.', '.$this->colVersion.' from '.$this->table)->fetchAll() as $l)
+			$r[$l[$this->colModule]][$l[$this->colVersion]] = true;
 		}
 		catch(PDOException $ex)
 		{
@@ -68,7 +72,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		catch(PDOException $ex)
 		{
 			// Le seul cas de pétage possible est si nous-mêmes ne nous sommes pas initialisés.
-			if(isset($this->majeur->_àFaire[$this->moi][MajeurSiloPdo::V_VERROU]))
+			if(isset($this->majeur->_àFaire[$this->moi][$this->vVerrou]))
 			{
 				$this->bdd->rollback();
 				$this->bdd->beginTransaction();
@@ -90,18 +94,18 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		if(isset($this->_exceptionTolérée))
 		{
 			// Si on a laissé passer une exception sur le verrouillage, croyant que nous n'avions pas encore de quoi poser le verrou et qu'il nous fallait donc être tolérants jusque-là; mais que finalement on se rend compte qu'on essaie de nous emberlificoter (de passer une MàJ hors-sujet par rapport à notre volonté de converger au plus vite vers une base verrouillable), mieux vaut péter tard que jamais.
-			if($module != $this->moi || version_compare($version, MajeurSiloPdo::V_VERROU) > 0)
+			if($module != $this->moi || version_compare($version, $this->vVerrou) > 0)
 				throw $ex;
 			unset($this->_exceptionTolérée);
 		}
-		if($module != $this->moi || version_compare($version, MajeurSiloPdo::V_COMM) >= 0)
+		if($module != $this->moi || version_compare($version, $this->vComm) >= 0)
 		{
-			$req = $this->bdd->prepare('insert into '.$this->table.' (module, version, comm) values (:module, :version, :comm)');
+			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.', '.$this->colComm.') values (:module, :version, :comm)');
 			$req->execute(array('module' => $module, 'version' => $version, 'comm' => $comm));
 		}
 		else
 		{
-			$req = $this->bdd->prepare('insert into '.$this->table.' (module, version) values (:module, :version)');
+			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.') values (:module, :version)');
 			$req->execute(array('module' => $module, 'version' => $version));
 		}
 		$this->bdd->commit();
@@ -115,8 +119,8 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		if(!isset($this->installs))
 			$this->installs = array
 			(
-				MajeurSiloPdo::V_VERROU => 'create table '.$this->table.' (quand timestamp default now(), module varchar(255), version varchar(31))',
-				MajeurSiloPdo::V_COMM => 'alter table '.$this->table.' add column comm text',
+				$this->vVerrou => 'create table '.$this->table.' (quand timestamp default now(), '.$this->colModule.' varchar(255), '.$this->colVersion.' varchar(31))',
+				$this->vComm => 'alter table '.$this->table.' add column '.$this->colComm.' text',
 			);
 	}
 	
