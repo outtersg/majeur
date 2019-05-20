@@ -26,6 +26,7 @@
  */
 class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 {
+	public $table = 'versions';
 	public $moi = '.';
 	
 	public $colModule = 'module';
@@ -36,10 +37,12 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 	public $vVerrou = '1';
 	public $vComm = '1.1';
 	
-	public function __construct(PDO $bdd, $table)
+	public function __construct(PDO $bdd, $paramétrage = array())
 	{
 		$this->bdd = $bdd;
-		$this->table = $table;
+		if(isset($paramétrage))
+			foreach($paramétrage as $option => $val)
+				$this->$option = $val; // À FAIRE: un minimum de contrôles sur les options autorisées.
 	}
 	
 	public function déjàJouées()
