@@ -109,6 +109,9 @@ class MajeurListeurDossiers implements MajeurListeur
 						$élémentsApp[0 + substr($clé, 3)] = $val;
 				ksort($élémentsApp, SORT_NUMERIC);
 				$app = implode($this->sépÉlémentsModule, $élémentsApp);
+				if(isset($this->trad))
+					foreach($this->trad as $regex => $trad)
+						$app = preg_replace($regex, $trad, $app);
 				$majs[] = array($app, $r['version'], $chemin);
 			}
 			// À FAIRE: else notifier qu'un fichier correspondait au glob() mais que le crible (plus sévère) de l'expr l'a éliminé: erreur de nommage?
