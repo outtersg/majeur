@@ -23,6 +23,7 @@
 
 require_once dirname(__FILE__).'/MajeurJoueur.php';
 require_once dirname(__FILE__).'/../sqleur/Sqleur.php';
+require_once dirname(__FILE__).'/../sqleur/SqleurPreproIncl.php';
 
 /**
  * Exécute une mise-à-jour.
@@ -32,7 +33,11 @@ class MajeurJoueurPdo implements MajeurJoueur
 	public function __construct($bdd, $défs = array())
 	{
 		$this->bdd = $bdd;
-		$this->sqleur = new Sqleur(array($this, '_jouerRequête'));
+		$préprocs = array
+		(
+			new SqleurPreproIncl(),
+		);
+		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
 		$this->défs = $défs;
 	}
 	
