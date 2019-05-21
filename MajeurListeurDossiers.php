@@ -38,7 +38,9 @@ class MajeurListeurDossiers implements MajeurListeur
 	 */
 	public function __construct($globDossiers, $exprChemins = null, $suffixes = null)
 	{
-		if($suffixes)
+		if(is_array($globDossiers) && isset($globDossiers['chemins']))
+			$this->_initParChemins($globDossiers['chemins']);
+		else if($suffixes)
 			$this->_initParFixes($globDossiers, $exprChemins, $suffixes);
 		else
 			$this->_init($globDossiers, $exprChemins);
@@ -46,7 +48,68 @@ class MajeurListeurDossiers implements MajeurListeur
 	
 	public static function ExprFichiers($préfixe, $suffixes)
 	{
-		return $préfixe.'(?P<version>[0-9][.0-9]*)(?:-[^/]*)?\.(?:'.(is_array($suffixes) ? implode('|', $suffixes) : $suffixes).')';
+		if(!is_array($suffixes))
+			$suffixes = array($suffixes);
+		foreach($suffixes as & $ptrSuffixe)
+			$ptrSuffixe = \GlobExpr::globEnExpr($ptrSuffixe);
+		return $préfixe.'(?P<version>[0-9][.0-9]*)(?:-[^/]*)?\.(?:'.implode('|', $suffixes).')';
+	}
+	
+	public static function ExprNiveaux($entre, $et = null)
+	{
+		if(!isset($et))
+		{
+			$et = $entre;
+			$entre = 0;
+		}
+		
+		$r = '';
+		
+		for($n = $et - $entre; --$entre >= 0;)
+			$r .= '(?:{[^/]*}/)';
+		while(--$n >= 0)
+			$r .= '(?:{[^/]*}/)?';
+		
+		return $r;
+	}
+	
+	protected function _boutEnExpr($bout, $fichier = false)
+	{
+		if(is_array($bout) && isset($bout[1]) && is_array($bout[1]))
+			return MajeurListeurDossiers::ExprFichiers($bout[0], $bout[1]);
+		else if(strpbrk($bout, '()?|') !== false)
+			return $bout;
+		else
+		{
+			if($bout && !$fichier && substr($bout, -1) != '/')
+				$bout .= '/';
+			return \GlobExpr::globEnExpr($bout);
+		}
+	}
+	
+	protected function _initParChemins($chemins, $exprFichier = null)
+	{
+		if(($exprFichierIndép = isset($exprFichier)))
+			$exprFichier = $this->_boutEnExpr($exprFichier, true);
+		
+		$exprChemins = array();
+		foreach($chemins as $chemin)
+		{
+			if(!$exprFichierIndép)
+			{
+				$exprFichierIci = $this->_boutEnExpr(array_pop($chemin), true);
+				if(isset($exprFichier) && $exprFichierIci !== $exprFichier)
+					// Le nom de fichier porte a priori le numéro de version, or preg_match déteste que l'on utilise deux fois la même capture nommée, /libellé\.(?P<v>[0-9])\.php|nom\.(?P<v>[0-9])\.php/. À l'appelant de créer une seule expression regroupant les deux.
+					throw new Exception("Impossible de combiner en une seule expression '$exprFichier' et '$exprFichierIci'");
+				$exprFichier = $exprFichierIci;
+			}
+			$exprChemin = '';
+			foreach($chemin as $bout)
+				$exprChemin .= $this->_boutEnExpr($bout);
+			$exprChemins[] = $exprChemin;
+		}
+		$exprChemins = '(?:'.implode('|', $exprChemins).')'.$exprFichier;
+		$this->_init($exprChemins);
 	}
 	
 	protected function _initParFixes($globDossiers, $préfixe, $suffixes)
