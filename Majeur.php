@@ -172,7 +172,10 @@ class Majeur
 			$this->silo->annuler();
 			$this->_àFaire[$module][$version] = $info;
 			if($ex instanceof MajeurEnAttente)
+			{
+				$this->diag->normal("(temporisée, en attente de ".$ex->bloqueur[0]." ".$ex->bloqueur[1].")\n");
 				$this->_bloquées[$module][$version] = $ex->bloqueur;
+			}
 			else
 			{
 				unset($this->_bloquées[$module][$version]);
