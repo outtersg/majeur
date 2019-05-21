@@ -35,6 +35,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 		$this->bdd = $bdd;
 		$préprocs = array
 		(
+			$this,
 			new SqleurPreproIncl(),
 		);
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
@@ -107,6 +108,22 @@ class MajeurJoueurPdo implements MajeurJoueur
 		
 		if($ex)
 			throw $ex;
+	}
+	
+	public function préprocesse($motClé, $directive)
+	{
+		switch($motClé)
+		{
+			case '#req':
+			case '#requiers':
+			case '#requiert':
+			case '#require':
+				$req = preg_split('/\s+/', $directive);
+				$this->majeur->requérir($req[1], $req[2]);
+				return;
+		}
+		
+		return false;
 	}
 }
 
