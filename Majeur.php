@@ -212,4 +212,13 @@ class Majeur
 	}
 }
 
+class MajeurEnAttente extends Exception
+{
+	public function __construct($message, $moduleVersion)
+	{
+		parent::__construct($message);
+		$this->bloqueur = $moduleVersion;
+	}
+}
+
 ?>
