@@ -109,6 +109,18 @@ class Majeur
 		return $r;
 	}
 	
+	protected function _débloquer($m, $v)
+	{
+		unset($this->_bloquées[$m][$v]);
+		if(!count($this->_bloquées[$m]))
+			unset($this->_bloquées[$m]);
+		$débloqué = array($m, $v);
+		foreach($this->_bloquées as $attendantM => $attendus)
+			foreach($attendus as $attendantV => $attendu)
+				if($attendu == $débloqué)
+					$this->_débloquer($attendantM, $attendantV);
+	}
+	
 	protected function _prochaine()
 	{
 		foreach($this->_àFaire as $module => $versions)
@@ -118,7 +130,7 @@ class Majeur
 				return array($module, $version, $info);
 			else if(isset($this->_faites[$module][$version])) // Ou si depuis le dernier passage la situation s'est débloquée.
 			{
-				unset($this->_bloquées[$module][$version]);
+				$this->_débloquer($module, $version);
 				return array($module, $version, $info);
 			}
 		}
@@ -164,7 +176,7 @@ class Majeur
 				throw new Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
 			$joueur->jouer($module, $version, $info);
 			$this->silo->valider($module, $version);
-			unset($this->_bloquées[$module][$version]);
+			$this->_débloquer($module, $version);
 			$this->_faites[$module][$version] = $info;
 		}
 		catch(Exception $ex)
@@ -178,7 +190,7 @@ class Majeur
 			}
 			else
 			{
-				unset($this->_bloquées[$module][$version]);
+				$this->_débloquer($module, $version);
 				throw $ex;
 			}
 		}
