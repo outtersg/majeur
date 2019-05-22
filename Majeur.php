@@ -177,7 +177,8 @@ class Majeur
 			if(!$joueur)
 				throw new Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
 			$joueur->jouer($module, $version, $info);
-			$this->silo->valider($module, $version);
+			$this->silo->enregistrer($module, $version);
+			$this->silo->valider();
 			$this->_débloquer($module, $version);
 			$this->_faites[$module][$version] = $info;
 		}

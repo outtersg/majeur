@@ -30,7 +30,8 @@ interface MajeurSilo
 	public function déjàJouées();
 	public function verrouiller();
 	public function annuler();
-	public function valider($module, $version, $comm = null);
+	public function enregistrer($module, $version, $comm = null);
+	public function valider();
 }
 
 ?>
