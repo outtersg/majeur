@@ -40,6 +40,26 @@ class MajeurJoueurPdo implements MajeurJoueur
 		);
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
 		$this->défs = $défs;
+		
+		$pasCetteFois = array
+		(
+			'(passe|ignore) (juste |seulement |)(aujourd\'hui|temp(orairement)?|(cette|une) fois(-ci)?)',
+			'pas cette fois|une autre fois',
+			'skip (only )?(once|today)',
+			'not (now|today)',
+		);
+		$jamaisDeLaVie = array
+		(
+			'(passe|ignore)',
+			'skip',
+		);
+		$exprPasser = array();
+		foreach(array('pasCetteFois', 'jamaisDeLaVie') as $composant)
+		{
+			$sousExpr = $$composant;
+			$exprPasser[] = '(?P<'.$composant.'>#(?:'.strtr(implode('|', $sousExpr), array('(' => '(?:', ' ' => '\s+')).'))';
+		}
+		$this->exprPasser = '%^(?:'.implode('|', $exprPasser).')\s*%';
 	}
 	
 	public function saitJouer($module, $version, $info)
@@ -56,6 +76,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 	 */
 	public function jouer($module, $version, $info)
 	{
+		$this->moduleCourant = $module;
 		$this->init();
 		$this->sqleur->decoupeFichier($info);
 	}
@@ -123,6 +144,42 @@ class MajeurJoueurPdo implements MajeurJoueur
 				$req = preg_split('/\s+/', $directive);
 				$this->majeur->requérir($req[1], $req[2]);
 				return;
+			default:
+				if(preg_match($this->exprPasser, $directive, $r))
+				{
+					$req = preg_replace('/\s*#.*/', '', substr($directive, strlen($r[0])));
+					$req = $req ? preg_split('/\s+/', $req) : array();
+					$àPasser = array();
+					$moduleÀPasser = null;
+					$moduleÀPasserExploité = false;
+					foreach($req as $truc)
+						if(preg_match('/^[0-9]+(?:\.[0-9]+)*$/', $truc))
+						{
+							if(!isset($moduleÀPasser))
+								$moduleÀPasser = $this->moduleCourant;
+							$àPasser[$moduleÀPasser][$truc] = true;
+							$moduleÀPasserExploité = true;
+						}
+						else
+						{
+							$moduleÀPasser = $truc;
+							$moduleÀPasserExploité = false;
+						}
+					if(isset($moduleÀPasser) && !$moduleÀPasserExploité)
+					{
+						$classeEx = 'ErreurExpr';
+						class_exists($classeEx) || $classeEx = 'Exception';
+						throw new $classeEx($motClé.' '.$moduleÀPasser.': quelle version du module faut-il passer?');
+					}
+					$définitivement = empty($r['pasCetteFois']);
+					foreach($àPasser as $module => $versions)
+						foreach($versions as $version => $trou)
+							$this->majeur->passer($module, $version, $définitivement);
+					if(!count($àPasser))
+						$this->majeur->passer(null, null, $définitivement);
+					return;
+				}
+				break;
 		}
 		
 		return false;
