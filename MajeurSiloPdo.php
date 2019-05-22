@@ -92,7 +92,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		$this->bdd->rollback();
 	}
 	
-	public function valider($module, $version, $comm = null)
+	public function enregistrer($module, $version, $comm = null)
 	{
 		if(isset($this->_exceptionTolérée))
 		{
@@ -111,6 +111,10 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.') values (:module, :version)');
 			$req->execute(array('module' => $module, 'version' => $version));
 		}
+	}
+	
+	public function valider()
+	{
 		$this->bdd->commit();
 	}
 	
