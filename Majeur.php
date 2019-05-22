@@ -67,6 +67,7 @@ class Majeur
 	
 	public function tourner()
 	{
+		$this->_courante = null;
 		$this->silo->initialiser();
 		$this->_àFaire = $this->_listerParModule();
 		$this->_bloquées = array();
@@ -159,6 +160,7 @@ class Majeur
 		$info = $this->_àFaire[$module][$version];
 		unset($this->_àFaire[$module][$version]);
 		$this->_bloquées[$module][$version] = true; // Histoire qu'on se sache en cours.
+		$this->_courante = array($module, $version);
 		try
 		{
 			$this->diag->normal("=== $module $version ===\n(".$this->_libelléMàj($info).")\n");
@@ -194,6 +196,7 @@ class Majeur
 				throw $ex;
 			}
 		}
+		$this->_courante = null;
 	}
 	
 	public function requérir($module, $version)
