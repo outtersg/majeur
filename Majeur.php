@@ -176,11 +176,27 @@ class Majeur
 				}
 			if(!$joueur)
 				throw new Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
+			try
+			{
 			$joueur->jouer($module, $version, $info);
+			}
+			catch(MajeurJamaisDeLaVie $ex)
+			{
+				$this->diag->normal("(non applicable; marquée comme jouée)\n");
+				// Un "Jamais de la vie", c'est une invitation à nous marquer comme déjà joués (pour être sûrs de ne l'être jamais). On poursuit donc normalement, par notre enregistrement en base.
+			}
 			$this->silo->enregistrer($module, $version);
 			$this->silo->valider();
 			$this->_débloquer($module, $version);
 			$this->_faites[$module][$version] = $info;
+		}
+		catch(MajeurPasCetteFois $ex)
+		{
+			// Un "Pas cette fois", c'est pour nous marquer comme "pour cette exécution on s'ignore, mais la prochaine fois retentez-moi".
+			// On se termine donc sans erreur, mais sans enregistrement en base.
+			// L'unset($this->_àFaire[etc.]) du départ nous convient, on ne le détricote pas.
+			$this->diag->normal("(non applicable cette fois-ci)\n");
+			$this->silo->valider();
 		}
 		catch(Exception $ex)
 		{
@@ -210,6 +226,33 @@ class Majeur
 			throw new MajeurEnAttente('En attente de '.$module.' '.$version, array($module, $version));
 	}
 	
+	public function passer($module, $version, $définitivement = true)
+	{
+		// Est-ce sur la MàJ courante?
+		
+		if(!isset($module) || $this->_courante == array($module, $version))
+		{
+			$niFaitNiÀFaire = $définitivement ? 'MajeurJamaisDeLaVie' : 'MajeurPasCetteFois';
+			throw new $niFaitNiÀFaire();
+		}
+		
+		// Autres cas, on dézingue quelqu'un d'autre (ex.: une MàJ compendium créée après coup, mais numérotée avant une série d'autres, disant "inutile de passer toutes les suivantes, je les remplace").
+		
+		if(!isset($this->_àFaire[$module][$version]))
+			return;
+		
+		if($définitivement)
+		{
+			$this->diag->normal("(court-circuite $module $version: marquage de cette dernière comme passée)\n");
+			$this->silo->enregistrer($module, $version, '(annulée'.($this->_courante ? ' par '.implode(' ', $this->_courante) : '').')');
+			$this->_débloquer($module, $version);
+			$this->_faites[$module][$version] = $this->_àFaire[$module][$version];
+		}
+		else
+			$this->diag->normal("($module $version sera ignorée cette fois-ci)\n");
+		unset($this->_àFaire[$module][$version]);
+	}
+	
 	protected function _descrMàj($module, $version, $info)
 	{
 		return "$module $version (".$this->_libelléMàj($info).")";
@@ -235,6 +278,16 @@ class MajeurEnAttente extends Exception
 		parent::__construct($message);
 		$this->bloqueur = $moduleVersion;
 	}
+}
+
+/* Les "Ni fait ni à faire" */
+
+class MajeurPasCetteFois extends Exception
+{
+}
+
+class MajeurJamaisDeLaVie extends Exception
+{
 }
 
 ?>
