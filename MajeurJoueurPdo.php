@@ -88,7 +88,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 		try
 		{
 			$ex = null;
-			$this->bdd->query($sql);
+			$rés = $this->bdd->query($sql);
 			$t1 = microtime(true);
 		}
 		catch(Exception $ex)
@@ -108,6 +108,8 @@ class MajeurJoueurPdo implements MajeurJoueur
 		
 		if($ex)
 			throw $ex;
+		
+		return $rés;
 	}
 	
 	public function préprocesse($motClé, $directive)
