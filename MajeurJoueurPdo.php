@@ -102,6 +102,11 @@ class MajeurJoueurPdo implements MajeurJoueur
 		) + $this->défs);
 	}
 	
+	public function affDurée($secondes)
+	{
+		return $secondes >= 1 ? sprintf('%.3f s', $secondes) : sprintf('%d ms', ceil($secondes * 1000));
+	}
+	
 	public function _jouerRequête($sql)
 	{
 		$t0 = microtime(true);
