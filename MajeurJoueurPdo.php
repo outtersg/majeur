@@ -30,6 +30,9 @@ require_once dirname(__FILE__).'/../sqleur/SqleurPreproIncl.php';
  */
 class MajeurJoueurPdo implements MajeurJoueur
 {
+	public $récapNMax = 1024;
+	public $récapTMax = 1048576;
+	
 	public function __construct($bdd, $défs = array())
 	{
 		$this->bdd = $bdd;
@@ -100,11 +103,42 @@ class MajeurJoueurPdo implements MajeurJoueur
 			':pilote' => $pilote,
 			':driver' => $pilote,
 		) + $this->défs);
+		
+		$this->_récap = null;
+		$this->_récapN = 0;
+		$this->_récapNPlus = 0;
+		$this->_récapTPlus = 0;
 	}
 	
 	public function affDurée($secondes)
 	{
 		return $secondes >= 1 ? sprintf('%.3f s', $secondes) : sprintf('%d ms', ceil($secondes * 1000));
+	}
+	
+	protected function récap()
+	{
+		if(isset($this->_récap))
+		{
+			$récap = $this->_récap;
+			if($this->_récapNPlus && $this->_récapTPlus)
+				$récap .= "\n-- + ".$this->_récapNPlus." autres requêtes [".$this->affDurée($this->_récapTPlus)."]";
+			return $récap;
+		}
+	}
+	
+	protected function _récap($req, $durée)
+	{
+		$tout = ($this->_récap ? $this->_récap."\n" : '').$req.'; -- '.$this->affDurée($durée);
+		if(strlen($tout) < $this->récapTMax - 30 && $this->_récapN < $this->récapNMax)
+		{
+			++$this->_récapN;
+			$this->_récap = $tout;
+		}
+		else
+		{
+			++$this->_récapNPlus;
+			$this->_récapTPlus += $durée;
+		}
 	}
 	
 	public function _jouerRequête($sql)
@@ -131,6 +165,8 @@ class MajeurJoueurPdo implements MajeurJoueur
 		
 		$affDurée = $this->affDurée($durée);
 		$this->majeur->diag->$sortie($ex ? "\n".'[4m/!\\[24m '.$ex->getMessage()."\n" : '[ '.$affDurée.' ]'."\n");
+		
+		$this->_récap($sql, $durée);
 		
 		if($ex)
 			throw $ex;
