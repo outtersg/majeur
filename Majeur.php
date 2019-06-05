@@ -178,14 +178,15 @@ class Majeur
 				throw new Exception("Aucun Joueur pour exécuter $module $version (".(is_string($info) ? $info : serialize($info)).")");
 			try
 			{
-			$joueur->jouer($module, $version, $info);
+				$rés = $joueur->jouer($module, $version, $info);
 			}
 			catch(MajeurJamaisDeLaVie $ex)
 			{
-				$this->diag->normal("(non applicable; marquée comme jouée)\n");
+				$rés = '(non applicable; marquée comme jouée)';
+				$this->diag->normal($rés."\n");
 				// Un "Jamais de la vie", c'est une invitation à nous marquer comme déjà joués (pour être sûrs de ne l'être jamais). On poursuit donc normalement, par notre enregistrement en base.
 			}
-			$this->silo->enregistrer($module, $version);
+			$this->silo->enregistrer($module, $version, is_string($rés) ? $rés : null);
 			$this->silo->valider();
 			$this->_débloquer($module, $version);
 			$this->_faites[$module][$version] = $info;
