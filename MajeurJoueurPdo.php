@@ -82,6 +82,8 @@ class MajeurJoueurPdo implements MajeurJoueur
 		$this->moduleCourant = $module;
 		$this->init();
 		$this->sqleur->decoupeFichier($info);
+		
+		return $this->récap();
 	}
 	
 	protected function init()
