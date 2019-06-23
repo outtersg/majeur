@@ -237,6 +237,38 @@ class Majeur
 	
 	public function passer($module, $version, $définitivement = true)
 	{
+		$versions = array();
+		
+		if(!isset($module))
+			list($module, $version) = $this->_courante;
+		
+		// Résolution de version.
+		
+		if(strpos($version, '*') === false)
+			$versions[$version] = true;
+		else
+		{
+			$expr = '#^'.strtr($version, array('.' => '\.', '*' => '.*')).'$#';
+			foreach($this->_àFaire[$module] as $v => $rien)
+				if(preg_match($expr, $v))
+					$versions[$v] = true;
+		}
+		
+		// Réorg.
+		// Si la version courante doit être court-circuitée, faisons-le en dernier; sinon elle nous fera sortir avant d'avoir traité les autres.
+		
+		if($module == $this->_courante[0] && isset($versions[$this->_courante[1]]))
+		{
+			unset($versions[$this->_courante[1]]);
+			$versions[$this->_courante[1]] = true;
+		}
+		
+		foreach($versions as $v => $rien)
+			$this->_passer($module, $v, $définitivement);
+	}
+	
+	protected function _passer($module, $version, $définitivement = true)
+	{
 		// Est-ce sur la MàJ courante?
 		
 		if(!isset($module) || $this->_courante == array($module, $version))
