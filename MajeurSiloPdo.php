@@ -181,6 +181,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 	public function jouer($module, $version, $sql)
 	{
 		$this->bdd->query($sql);
+		return $sql;
 	}
 }
 
