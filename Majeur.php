@@ -101,6 +101,9 @@ class Majeur
 			foreach($màjsListeur as $màj)
 			{
 			if(isset($r[$màj[0]][$màj[1]]))
+					if($this->doublon($r[$màj[0]][$màj[1]], $màj[2])) // Il se peut que l'on ait chopé malencontreusement deux fichiers au même numéro, ex.: UPDATE-1-définitif.sql et UPDATE-1-premieressai.sql. En ce cas, du moment que le contenu est identique, on peut ignorer l'un des deux.
+						continue;
+					else
 				throw new Exception('Deux mises-à-jour '.$màj[0].' '.$màj[1].': '.$this->_libelléMàj($r[$màj[0]][$màj[1]]).', '.$this->_libelléMàj($màj[2]));
 			$r[$màj[0]][$màj[1]] = $màj[2];
 			if(isset($màj[3]))
@@ -108,6 +111,11 @@ class Majeur
 			}
 		}
 		return $r;
+	}
+	
+	public function doublon($i0, $i1)
+	{
+		return is_file($i0) && is_file($i1) && md5_file($i0) == md5_file($i1);
 	}
 	
 	protected function _débloquer($m, $v)
