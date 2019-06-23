@@ -34,6 +34,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 	public $colComm = 'comm';
 	
 	// Par convention, la 1 est la version à partir de laquelle notre table existe (les 0.x serviront à préparer les extensions etc.).
+	public $vTable = '1';
 	public $vVerrou = '1';
 	public $vComm = '1.1';
 	
@@ -94,22 +95,51 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 	
 	public function enregistrer($module, $version, $comm = null)
 	{
+		$versionBase = $module != $this->moi ? max($this->vTable, $this->vVerrou, $this->vComm) : (isset($this->_enregistrementEnCoursVersion) ? $this->_enregistrementEnCoursVersion : $version);
 		if(isset($this->_exceptionTolérée))
 		{
 			// Si on a laissé passer une exception sur le verrouillage, croyant que nous n'avions pas encore de quoi poser le verrou et qu'il nous fallait donc être tolérants jusque-là; mais que finalement on se rend compte qu'on essaie de nous emberlificoter (de passer une MàJ hors-sujet par rapport à notre volonté de converger au plus vite vers une base verrouillable), mieux vaut péter tard que jamais.
-			if($module != $this->moi || version_compare($version, $this->vVerrou) > 0)
+			if(version_compare($versionBase, $this->vVerrou) > 0)
 				throw $ex;
 			unset($this->_exceptionTolérée);
 		}
-		if($module != $this->moi || version_compare($version, $this->vComm) >= 0)
+		if(version_compare($versionBase, $this->vComm) >= 0)
 		{
+			$this->_enregistrerLesGardésPourPlusTard($version);
 			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.', '.$this->colComm.') values (:module, :version, :comm)');
 			$req->execute(array('module' => $module, 'version' => $version, 'comm' => $comm));
 		}
-		else
+		else if(version_compare($versionBase, $this->vTable) >= 0)
 		{
+			$this->_enregistrerLesGardésPourPlusTard($version);
 			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.') values (:module, :version)');
 			$req->execute(array('module' => $module, 'version' => $version));
+		}
+		else
+		{
+			// Si la table n'est pas encore en place, on n'a rien de mieux (mais c'est fragile) que de garder en mémoire cela, dans le but de l'écrire dès que la table sera présente (et espérer qu'on ne plantera pas entretemps).
+			$this->_gardésPourPlusTard[] = func_get_args();
+		}
+	}
+	
+	protected function _enregistrerLesGardésPourPlusTard($versionEnCours)
+	{
+		if(isset($this->_gardésPourPlusTard))
+		{
+			$àEnregistrer = $this->_gardésPourPlusTard;
+			unset($this->_gardésPourPlusTard);
+			$this->_enregistrementEnCoursVersion = $versionEnCours;
+			try
+			{
+				foreach($àEnregistrer as $ligne)
+					call_user_func_array(array($this, 'enregistrer'), $ligne);
+			}
+			catch(Exception $ex)
+			{
+				unset($this->_enregistrementEnCoursVersion);
+				throw $ex;
+			}
+			unset($this->_enregistrementEnCoursVersion);
 		}
 	}
 	
