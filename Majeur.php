@@ -121,7 +121,7 @@ class Majeur
 	protected function _débloquer($m, $v)
 	{
 		unset($this->_bloquées[$m][$v]);
-		if(!count($this->_bloquées[$m]))
+		if(isset($this->_bloquées[$m]) && !count($this->_bloquées[$m]))
 			unset($this->_bloquées[$m]);
 		$débloqué = array($m, $v);
 		foreach($this->_bloquées as $attendantM => $attendus)
