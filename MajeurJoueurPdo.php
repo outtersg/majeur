@@ -196,7 +196,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 					$moduleÀPasser = null;
 					$moduleÀPasserExploité = false;
 					foreach($req as $truc)
-						if(preg_match('/^[0-9]+(?:\.[0-9]+)*$/', $truc))
+						if(preg_match('/^[0-9*]+(?:\.[0-9*]+)*$/', $truc))
 						{
 							if(!isset($moduleÀPasser))
 								$moduleÀPasser = $this->moduleCourant;
