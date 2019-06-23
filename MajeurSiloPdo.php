@@ -106,6 +106,13 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		if(version_compare($versionBase, $this->vComm) >= 0)
 		{
 			$this->_enregistrerLesGardésPourPlusTard($version);
+			if(isset($this->_commentairesPourPlusTard))
+			{
+				foreach($this->_commentairesPourPlusTard as $moduleAncienComm => $versionsAncienComm)
+					foreach($versionsAncienComm as $versionAncienComm => $ancienComm)
+						$this->bdd->prepare('update '.$this->table.' set '.$this->colComm.' = :comm where '.$this->colModule.' = :module and '.$this->colVersion.' = :version and '.$this->colComm.' is null')->execute(array('module' => $moduleAncienComm, 'version' => $versionAncienComm, 'comm' => $ancienComm));
+				unset($this->_commentairesPourPlusTard);
+			}
 			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.', '.$this->colComm.') values (:module, :version, :comm)');
 			$req->execute(array('module' => $module, 'version' => $version, 'comm' => $comm));
 		}
@@ -114,6 +121,8 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 			$this->_enregistrerLesGardésPourPlusTard($version);
 			$req = $this->bdd->prepare('insert into '.$this->table.' ('.$this->colModule.', '.$this->colVersion.') values (:module, :version)');
 			$req->execute(array('module' => $module, 'version' => $version));
+			if(isset($comm))
+				$this->_commentairesPourPlusTard[$module][$version] = $comm;
 		}
 		else
 		{
