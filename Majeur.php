@@ -176,6 +176,8 @@ class Majeur
 		$this->_courante = array($module, $version);
 		try
 		{
+			if(method_exists($this->silo, 'commencer'))
+				$this->silo->commencer($module, $version);
 			$this->diag->normal("=== $module $version ===\n(".$this->_libelléMàj($info).")\n");
 			$joueur = null;
 			if(isset($this->méta[$module][$version][0]))
