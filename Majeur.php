@@ -55,6 +55,11 @@ class Majeur
 	protected function _calculerResteÀJouer()
 	{
 		$this->_faites = $this->silo->déjàJouées();
+		$this->organiserÀFaire();
+	}
+	
+	public function organiserÀFaire()
+	{
 		foreach($this->_àFaire as $module => & $ptrMàjsModule)
 		{
 			if(isset($this->_faites[$module]))
