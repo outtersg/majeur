@@ -63,7 +63,7 @@ class MajeurInfoAffDot
 		echo "}\n";
 		
 		if(isset($this->_sortie))
-			file_put_contents($this->_sortie, ob_get_flush());
+			file_put_contents($this->_sortie, ob_get_clean());
 	}
 }
 
