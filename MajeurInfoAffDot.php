@@ -33,7 +33,13 @@ class MajeurInfoAffDot
 		if(isset($this->_sortie))
 			ob_start();
 		
-		$reste[$courante[0]][$courante[1]] = true; // La MàJ en train d'être jouée est considérée comme non encore passée.
+		$reste[$courante[0]][$courante[1]] = $màjs[$courante[0]][$courante[1]]; // La MàJ en train d'être jouée est considérée comme non encore passée.
+		
+		$idFichiers = array();
+				
+		foreach($màjs as $app => $versions)
+			foreach($versions as $v => $f)
+				$idFichiers["$app $v"] = $idFichiers[$f] = preg_replace('/[^a-zA-Z0-9]+/', '_', "$app $v");
 		
 		echo "digraph G\n{\n\tedge [ dir = back ];\n";
 		$idApp = 0;
@@ -43,22 +49,69 @@ class MajeurInfoAffDot
 			$affApp = $app;
 			$affApp = strtr($affApp, array('.' => '\n', ' ' => '\n')); // Des retours à la ligne, pour qu'en cas d'affichage colonne on l'ait aussi étroite que les numéros de version possible.
 			echo "\tsubgraph cluster_$idApp\n\t{\n\t\tlabel = \"$affApp\";\n\t\tstyle = filled;\n\t\tcolor = lightgrey;\n\n";
+			$nœuds = array($versions, array());
 			if(isset($reste[$app]))
 			{
-				echo "\t\tnode [ shape = box, style = filled, fillcolor = \"#FFFFBF\" ];";
-				foreach($reste[$app] as $v => $rien)
-					echo "\t\t\"$app $v\";";
+				$nœuds[0] = array_diff_key($nœuds[0], $reste[$app]);
+				$nœuds[1] = $reste[$app];
 			}
-			echo "\t\tnode [ shape = box, style = filled, fillcolor = \"#BFFFBF\" ];";
-			unset($avant);
-			foreach(array_reverse($versions, true) as $v => $f)
+			foreach($nœuds as $cat => $trucs)
 			{
-				echo "\t\t\"$app $v\" [ label = \"$v\" ];\n";
-				if(isset($avant))
-					echo "\t\t\"$app $avant\" -> \"$app $v\";\n";
-				$avant = $v;
+				$coul = $cat ? 'FFFFBF' : 'BFFFBF';
+				echo "\t\tnode [ shape = box, style = filled, fillcolor = \"#$coul\" ]\n";
+				foreach($trucs as $v => $f)
+				{
+					$affV = $v;
+					if(preg_match("#^(?:[a-zA-Z]+-)?$v-(.*)\.[a-zA-Z0-9]{1,5}\$#", basename($f), $r)) // On récupère le libellé des noms respectant la convention <préfixe commun>-<version>-<libellé>.<suffixe>.
+						$affV .= "\\n\\\"".$r[1]."\\\"";
+					echo "\t\t".$idFichiers[$f]." [ label = \"".$affV."\" ]\n";
+				}
+			}
+			unset($suivant);
+			$têteEnLAir = array_reverse($versions, true);
+			$avant = $idFichiers[array_shift($têteEnLAir)];
+			foreach($têteEnLAir as $f)
+			{
+				echo "\t\t".$avant." -> ".($id = $idFichiers[$f])."\n";
+				$avant = $id;
 			}
 			echo "\t}\n";
+		}
+		$ids = array();
+		// Dans ce qui suit, les nœuds non encore déclarés n'ont pas été trouvés: on les affiche en rouge.
+		echo "\tnode [ shape = box, style = filled, fillcolor = \"#FFBFBF\" ]\n";
+		foreach($màjs as $app => $versions)
+			foreach($versions as $v => $f)
+				if(isset($info[$f]))
+				{
+					if(isset($info[$f]['rr']))
+						foreach($info[$f]['rr'] as $r => $trou)
+						{
+							$idReq = isset($idFichiers[$r]) ? $idFichiers[$r] : '"'.$r.'"';
+							echo "\t".$idFichiers[$f]." -> $idReq\n";
+						}
+				}
+		// Les fichiers inclus.
+		echo "\tnode [ shape = box, style = filled, fillcolor = \"#FFFFFF\" ]\n";
+		echo "\tedge [ style = dotted ];\n";
+		foreach($info as $f => $df)
+		{
+			if(!isset($idFichiers[$f]))
+			{
+				$n = 0;
+				$suffixe = '';
+				$id = preg_replace('/[^a-zA-Z0-9]+/', '_', basename($f));
+				while(isset($ids[$id.$suffixe]))
+					$suffixe = '_'.++$n;
+				$ids[$id .= $suffixe] = true;
+				$idFichiers[$f] = $id;
+				echo "\t$id [ label = \"".basename($f)."\" ]\n";
+			}
+			else
+				$id = $idFichiers[$f];
+			if(isset($df['inc']))
+				foreach($df['inc'] as $r)
+					echo "\t$id -> ".$idFichiers[$r]."\n";
 		}
 		echo "}\n";
 		
