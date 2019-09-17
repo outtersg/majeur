@@ -28,7 +28,7 @@ class MajeurInfoAffDot
 		$this->_sortie = $chemin;
 	}
 	
-	public function afficher($màjs, $courante, $reste)
+	public function afficher($info, $màjs, $courante, $reste)
 	{
 		if(isset($this->_sortie))
 			ob_start();
