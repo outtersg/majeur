@@ -84,6 +84,8 @@ class MajeurInfo
 	
 	protected function _afficher($moduleCourant, $versionCourante)
 	{
+		$this->_calculerDéps();
+		
 		if(!isset($this->_aff))
 		{
 			$classe = 'MajeurInfoAff'.ucfirst($this->_format);
@@ -91,7 +93,93 @@ class MajeurInfo
 			$this->_aff = new $classe($this, $this->_chemin);
 		}
 		
-		$this->_aff->afficher($this->_graphe, array($moduleCourant, $versionCourante), $this->majeur->_àFaire);
+		$this->_aff->afficher($this->_déps, $this->_graphe, array($moduleCourant, $versionCourante), $this->majeur->_àFaire);
+	}
+	
+	/*- Exploration statique -------------------------------------------------*/
+	
+	protected function _calculerDéps()
+	{
+		$this->_déps = array();
+		
+		foreach($this->_graphe as $module => $versions)
+			foreach($versions as $v => $info)
+				$this->_explorer($module, $v, $info);
+		
+		// Recherche récursive des prérequis.
+		
+		$traités = array();
+		$nPréc = -1;
+		while(($n = count($this->_déps))) // Tant qu'on a encore à traiter.
+		{
+			if($n == $nPréc)
+				throw new Exception("Boucle infinie entre ".implode(', ', array_keys($this->_déps)));
+			foreach($this->_déps as $f => & $pdf) // Pour chacun des fichiers (Pointeur Déps Fichier, pour qui se pose la question).
+			{
+				$pdf['rr'] = isset($pdf['req']) ? $pdf['req'] : array();
+				if(isset($pdf['inc']))
+					foreach($pdf['inc'] as $i) // Pour chacune des inclusions.
+					{
+						if(isset($this->_déps[$i])) // Aïe, pas encore traité.
+						{
+							// On remballe, pour le prochain tour de boucle.
+							unset($pdf['rr']);
+							continue 2;
+						}
+						if(!isset($traités[$i]))
+						{
+							fprintf(STDERR, "# $f: inclusion introuvable: $i\n");
+							$traités[$i] = array('rr' => array()); // Pour qu'il ne plante pas la prochaine fois.
+						}
+						$pdf['rr'] += $traités[$i]['rr'];
+					}
+				// Et on passe dans les traités.
+				$traités[$f] = $this->_déps[$f];
+				unset($this->_déps[$f]);
+			}
+			$nPréc = $n;
+		}
+		$this->_déps = $traités;
+	}
+	
+	protected function _explorer($module, $v, $info)
+	{
+		if(substr($info, -4) == '.sql')
+			$this->_explorerSql($module, $v, $info);
+		else
+			fprintf(STDERR, "[$module $v] Fichier non géré: $info\n");
+	}
+	
+	protected function _explorerSql($module, $v, $f)
+	{
+		$boulot = array($f);
+		
+		while(($f = array_shift($boulot)))
+		{
+			if(isset($this->_déps[$f]))
+				continue;
+			$this->_déps[$f] = array();
+			if(!file_exists($f))
+			{
+				fprintf(STDERR, "[$module $v] Fichier inexistant: $f\n");
+				continue;
+			}
+			
+			$contenu = file_get_contents($f);
+			preg_match_all('/^\h*#require\h+(\S+)\h+(\S+)\h*(?:--|$)/m', $contenu, $r);
+			foreach($r[1] as $num => $m1)
+				$this->_déps[$f]['req'][$m1.' '.$r[2][$num]] = true;
+			preg_match_all('/^\h*#include\h+(\S+)\h*(?:--|$)/m', $contenu, $r);
+			foreach($r[1] as $num => $m1)
+			{
+				if(substr($m1, 0, 1) != '/')
+					$m1 = dirname($f).'/'.$m1;
+				while(($m1racc = preg_replace('#/(?:\.?/|(?:[^./][^/]*|[.][^./][^/]*)/[.]{2}/)+#', '/', $m1)) != $m1)
+					$m1 = $m1racc;
+				$this->_déps[$f]['inc'][] = $m1;
+				$boulot[] = $m1;
+			}
+		}
 	}
 }
 
