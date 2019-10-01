@@ -63,6 +63,9 @@ class MajeurJoueurPdo implements MajeurJoueur
 			$exprPasser[] = '(?P<'.$composant.'>#(?:'.strtr(implode('|', $sousExpr), array('(' => '(?:', ' ' => '\s+')).'))';
 		}
 		$this->exprPasser = '%^(?:'.implode('|', $exprPasser).')\s*%';
+		
+		if(method_exists($bdd, 'pgsqlSetNoticeCallback'))
+			$bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
 	}
 	
 	public function saitJouer($module, $version, $info)
@@ -144,6 +147,11 @@ class MajeurJoueurPdo implements MajeurJoueur
 			++$this->_récapNPlus;
 			$this->_récapTPlus += $durée;
 		}
+	}
+	
+	public function notifDiag($message)
+	{
+		$this->majeur->diag->normal("\n> ".trim($message));
 	}
 	
 	public function _jouerRequête($sql)
