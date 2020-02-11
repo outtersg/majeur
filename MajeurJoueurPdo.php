@@ -24,6 +24,7 @@
 require_once dirname(__FILE__).'/MajeurJoueur.php';
 require_once dirname(__FILE__).'/../sqleur/Sqleur.php';
 require_once dirname(__FILE__).'/../sqleur/SqleurPreproIncl.php';
+if(file_exists($f = dirname(__FILE__).'/../sqleur/SqleurPreproDef.php')) require_once $f;
 
 /**
  * Exécute une mise-à-jour.
@@ -41,6 +42,8 @@ class MajeurJoueurPdo implements MajeurJoueur
 			$this,
 			new SqleurPreproIncl(),
 		);
+		if(class_exists('SqleurPreproDef'))
+			$préprocs[] = new SqleurPreproDef();
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
 		$this->défs = $défs;
 		
