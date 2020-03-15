@@ -71,6 +71,10 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		
 		try
 		{
+			switch($this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME))
+			{
+				case 'sqlite': return;
+			}
 			$this->bdd->query('lock table '.$this->table);
 		}
 		catch(PDOException $ex)
@@ -165,9 +169,18 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		if(!isset($this->installs))
 			$this->installs = array
 			(
-				$this->vVerrou => 'create table '.$this->table.' (quand timestamp default now(), '.$this->colModule.' varchar(255), '.$this->colVersion.' varchar(31))',
+				$this->vVerrou => 'create table '.$this->table.' (quand '.$this->_timestampdefaultnow().', '.$this->colModule.' varchar(255), '.$this->colVersion.' varchar(31))',
 				$this->vComm => 'alter table '.$this->table.' add column '.$this->colComm.' text',
 			);
+	}
+	
+	protected function _timestampdefaultnow()
+	{
+		switch($this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME))
+		{
+			case 'sqlite': return "timestamp default (datetime('now', 'localtime'))"; // https://stackoverflow.com/a/46419101/1346819
+		}
+		return 'timestamp default now()';
 	}
 	
 	public function lister()

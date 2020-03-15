@@ -45,6 +45,10 @@ class MajeurJoueurPdo implements MajeurJoueur
 		if(class_exists('SqleurPreproDef'))
 			$préprocs[] = new SqleurPreproDef();
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
+		switch($this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME))
+		{
+			case 'sqlite': $this->sqleur->_mode |= Sqleur::MODE_BEGIN_END; break;
+		}
 		$this->défs = $défs;
 		
 		$pasCetteFois = array

@@ -34,6 +34,9 @@ class Majeur
 	public function __construct(MajeurSilo $silo, $listeurs, $joueurs)
 	{
 		$this->diag = new MajeurDiag;
+		
+		// L'entreposage final.
+		
 		$this->silo = $silo;
 		$this->silo->majeur = $this;
 		
