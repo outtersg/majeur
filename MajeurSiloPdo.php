@@ -104,7 +104,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		{
 			// Si on a laissé passer une exception sur le verrouillage, croyant que nous n'avions pas encore de quoi poser le verrou et qu'il nous fallait donc être tolérants jusque-là; mais que finalement on se rend compte qu'on essaie de nous emberlificoter (de passer une MàJ hors-sujet par rapport à notre volonté de converger au plus vite vers une base verrouillable), mieux vaut péter tard que jamais.
 			if(version_compare($versionBase, $this->vVerrou) > 0)
-				throw $ex;
+				throw $this->_exceptionTolérée;
 			unset($this->_exceptionTolérée);
 		}
 		if(version_compare($versionBase, $this->vComm) >= 0)
