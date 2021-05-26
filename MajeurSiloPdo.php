@@ -46,6 +46,15 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 				$this->$option = $val; // À FAIRE: un minimum de contrôles sur les options autorisées.
 	}
 	
+	protected function _exceptionTolérable($ex)
+	{
+		if(isset($this->majeur->_àFaire[$this->moi][$this->vVerrou]))
+			// Et encore, on ne sait pas pour quelle version on nous demande de verrouiller: on vous a à l'œil, on vérifiera tout ça à la sortie.
+			$this->_exceptionTolérée = $ex;
+		else
+			throw $ex;
+	}
+	
 	public function déjàJouées()
 	{
 		$r = array();
@@ -56,8 +65,7 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		}
 		catch(PDOException $ex)
 		{
-			if(!isset($this->_exceptionTolérée))
-				throw $ex;
+			$this->_exceptionTolérable($ex);
 			$this->bdd->rollback();
 			$this->bdd->beginTransaction();
 		}
@@ -80,15 +88,9 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		catch(PDOException $ex)
 		{
 			// Le seul cas de pétage possible est si nous-mêmes ne nous sommes pas initialisés.
-			if(isset($this->majeur->_àFaire[$this->moi][$this->vVerrou]))
-			{
+			$this->_exceptionTolérable($ex);
 				$this->bdd->rollback();
 				$this->bdd->beginTransaction();
-				// Et encore, on ne sait pas pour quelle version on nous demande de verrouiller: on vous a à l'œil, on vérifiera tout ça à la sortie.
-				$this->_exceptionTolérée = $ex;
-			}
-			else
-				throw $ex;
 		}
 	}
 	
