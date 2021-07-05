@@ -173,6 +173,9 @@ class MajeurJoueurPdo implements MajeurJoueur
 		}
 		catch(Exception $ex)
 		{
+			require_once dirname(__FILE__).'/../sqleur/SqlUtils.php';
+			$u = new SqlUtils();
+			throw $u->jolieEx($ex, $sql);
 		}
 		
 		$durée = microtime(true) - $t0;
