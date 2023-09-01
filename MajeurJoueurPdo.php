@@ -45,7 +45,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 		if(class_exists('SqleurPreproDef'))
 			$préprocs[] = new SqleurPreproDef();
 		$this->sqleur = new Sqleur(array($this, '_jouerRequête'), $préprocs);
-		switch($this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME))
+		switch($this->pilote())
 		{
 			case 'sqlite': $this->sqleur->_mode |= Sqleur::MODE_BEGIN_END; break;
 		}
@@ -112,7 +112,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 				'AUTOPRIMARY' => 'integer primary key',
 			),
 		);
-		$pilote = $this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME);
+		$pilote = $this->pilote();
 		$this->sqleur->avecDefinitions($définitionsParPilote[$pilote] + array
 		(
 			':pilote' => $pilote,
@@ -247,6 +247,11 @@ class MajeurJoueurPdo implements MajeurJoueur
 		}
 		
 		return false;
+	}
+	
+	public function pilote()
+	{
+		return $this->bdd()->getAttribute(PDO::ATTR_DRIVER_NAME);
 	}
 	
 	/**
