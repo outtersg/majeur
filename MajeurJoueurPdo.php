@@ -248,6 +248,14 @@ class MajeurJoueurPdo implements MajeurJoueur
 		
 		return false;
 	}
+	
+	/**
+	 * Renvoie la base bas-niveau (objet PDO) à laquelle nous sommes connectés.
+	 */
+	public function bdd()
+	{
+		return $this->bdd;
+	}
 }
 
 ?>
