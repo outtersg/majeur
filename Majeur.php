@@ -320,6 +320,17 @@ class Majeur
 				return get_class($info).' '.spl_object_hash($info);
 		return serialize($info);
 	}
+	
+	public $diag;
+	public $silo;
+	public $listeurs;
+	public $joueurs;
+	public $méta;
+	public $bloqueur;
+	protected $_courante;
+	protected $_faites;
+	protected $_àFaire;
+	protected $_bloquées;
 }
 
 class MajeurEnAttente extends Exception
