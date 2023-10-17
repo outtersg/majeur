@@ -261,6 +261,17 @@ class MajeurJoueurPdo implements MajeurJoueur
 	{
 		return $this->bdd;
 	}
+	
+	public $bdd;
+	public $sqleur;
+	public $_sqleur;
+	public $majeur;
+	public $défs;
+	protected $exprPasser;
+	protected $_récap;
+	protected $_récapN;
+	protected $_récapNPlus;
+	protected $_récapTPlus;
 }
 
 ?>
