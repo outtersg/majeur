@@ -198,6 +198,14 @@ class MajeurSiloPdo implements MajeurSilo, MajeurListeur
 		$this->bdd->query($sql);
 		return $sql;
 	}
+	
+	public $majeur;
+	public $installs;
+	public $bdd;
+	protected $_enregistrementEnCoursVersion;
+	protected $_commentairesPourPlusTard;
+	protected $_gardésPourPlusTard;
+	protected $_exceptionTolérée;
 }
 
 ?>
