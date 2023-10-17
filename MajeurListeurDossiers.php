@@ -181,6 +181,10 @@ class MajeurListeurDossiers implements MajeurListeur
 		
 		return $majs;
 	}
+	
+	protected $_globs;
+	protected $_expr;
+	protected $_numProchaineCapture;
 }
 
 ?>
