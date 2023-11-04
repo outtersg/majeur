@@ -57,6 +57,9 @@ class MajeurJoueurPhp implements MajeurJoueur
 			$récap = substr($this->récapTMax, 0, -1)."\n// etc.; taille totale du fichier: ".filesize($info)."; md5(".md5_file($info).")\n";
 		return $récap;
 	}
+	
+	public $majeur;
+	public $défs;
 }
 
 ?>
