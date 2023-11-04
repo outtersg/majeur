@@ -268,6 +268,7 @@ class MajeurJoueurPdo implements MajeurJoueur
 	public $majeur;
 	public $défs;
 	protected $exprPasser;
+	protected $moduleCourant;
 	protected $_récap;
 	protected $_récapN;
 	protected $_récapNPlus;
